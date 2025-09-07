@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "get-rates-app"
+version = "0.1.0"
+description = "Daily FX rates fetcher from Riksbank SWEA (group 130) into SQLite"
+authors = ["Rustam Gamidov <rustformail@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "3.10.8"
+requests = "^2.32.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.0.0"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.poetry.scripts]
+get-rates-app = "app.main:main"
+
+[build-system]
+requires = ["poetry-core>=1.9.0,<2.0.0"]
+build-backend = "poetry.core.masonry.api"
+

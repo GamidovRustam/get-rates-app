@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Poetry
+.venv/
+
+# Local data
+.data/
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+
