@@ -1,22 +1,11 @@
 ````markdown
+# get-rates-app
 A tiny Python app that fetches the latest FX rates from the Riksbank SWEA API.
 According to the API documentation, all the latest FX rate data are available in a single request,
 so the app is designed in the simplest and most straightforward way.
 The retrieved rates are stored in a local SQLite database.
 
-- API endpoint (single call):  
-  `GET https://api.riksbank.se/swea/v1/Observations/Latest/ByGroup/130`
-- Response format example:
-```json
-[
-  {"seriesId":"SEKUSDPMI","date":"2025-09-05","value":9.40498},
-  {"seriesId":"SEKEURPMI","date":"2025-09-05","value":11.001}
-]
 ````
-
-> The app writes each item as a row into `observations(series_id, obs_date, value, received_at)`,
-> with a composite primary key `(series_id, obs_date)` to keep historical records without duplicates.
-
 ---
 
 ## Contents
@@ -43,7 +32,9 @@ The retrieved rates are stored in a local SQLite database.
 ## How It Works
 
 * The app calls **`/Observations/Latest/ByGroup/130`** once and receives a list of records:
-
+  - API endpoint (single call):  
+  `GET https://api.riksbank.se/swea/v1/Observations/Latest/ByGroup/130`
+  - Response format example:
   ```json
   {"seriesId":"SEKUSDPMI","date":"YYYY-MM-DD","value":9.40498}
   ```
@@ -96,14 +87,14 @@ Run **once a day** to keep history updated.
 ```bash
 crontab -e
 # Every day at 08:00 (local time)
-0 8 * * * cd /absolute/path/to/repo && /usr/local/bin/poetry run fx-rates >> .data/cron.log 2>&1
+0 8 * * * cd /absolute/path/to/repo && /usr/local/bin/poetry run get-rates-app >> .data/cron.log 2>&1
 ```
 
 > On some systems Poetry is at `~/.local/bin/poetry` — adjust path accordingly.
 
 ### Linux: systemd user timer (alternative)
 
-Create `~/.config/systemd/user/fx-rates.service`:
+Create `~/.config/systemd/user/get-rates-app.service`:
 
 ```ini
 [Unit]
@@ -112,14 +103,14 @@ Description=Fetch Riksbank FX rates (group 130)
 [Service]
 Type=oneshot
 WorkingDirectory=/absolute/path/to/repo
-ExecStart=/usr/bin/env poetry run fx-rates
+ExecStart=/usr/bin/env poetry run get-rates-app
 ```
 
-Create `~/.config/systemd/user/fx-rates.timer`:
+Create `~/.config/systemd/user/get-rates-app.timer`:
 
 ```ini
 [Unit]
-Description=Daily run of fx-rates
+Description=Daily run of get-rates-app
 
 [Timer]
 OnCalendar=08:00
@@ -133,8 +124,8 @@ Enable:
 
 ```bash
 systemctl --user daemon-reload
-systemctl --user enable --now fx-rates.timer
-systemctl --user status fx-rates.timer
+systemctl --user enable --now get-rates-app.timer
+systemctl --user status get-rates-app.timer
 ```
 
 ### Windows: Task Scheduler
@@ -152,7 +143,7 @@ Create a **Basic Task**:
   Arguments:
 
   ```
-  run fx-rates
+  run get-rates-app
   ```
 
   Start in:
