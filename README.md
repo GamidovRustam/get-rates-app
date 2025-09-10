@@ -1,10 +1,8 @@
-ось повний, самодостатній `README.md`, який можна покласти в репозиторій. Він покриває встановлення та запуск на **macOS / Linux / Windows**, форматування коду, запуск за розкладом і типові проблеми.
-
 ````markdown
-# FX Rates (Riksbank SWEA → SQLite), Group 130
-
-A tiny Python app that fetches **latest** FX rates for **group 130** from Riksbank SWEA API  
-in a single request and stores them into a local SQLite database.
+A tiny Python app that fetches the latest FX rates from the Riksbank SWEA API.
+According to the API documentation, all the latest FX rate data are available in a single request,
+so the app is designed in the simplest and most straightforward way.
+The retrieved rates are stored in a local SQLite database.
 
 - API endpoint (single call):  
   `GET https://api.riksbank.se/swea/v1/Observations/Latest/ByGroup/130`
@@ -24,15 +22,11 @@ in a single request and stores them into a local SQLite database.
 ## Contents
 
 * [Requirements](#requirements)
-* [Install (macOS, Linux, Windows)](#install-macos-linux-windows)
-* [Quick Start](#quick-start)
 * [How It Works](#how-it-works)
 * [Database & Queries](#database--queries)
 * [Scheduling (cron / systemd / Task Scheduler)](#scheduling-cron--systemd--task-scheduler)
 * [Formatting (black)](#formatting-black)
-* [Troubleshooting](#troubleshooting)
 * [Notes](#notes)
-* [License](#license)
 
 ---
 
@@ -43,127 +37,6 @@ in a single request and stores them into a local SQLite database.
 * Internet access to reach `api.riksbank.se`
 
 > SQLite is part of Python’s standard library (`sqlite3`), no extra DB server required.
-
----
-
-## Install (macOS, Linux, Windows)
-
-### macOS (zsh)
-
-1. **Install Python 3.10.8** (via `pyenv`, recommended)
-
-```bash
-# If Homebrew not installed:
-# /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-brew update
-brew install pyenv
-echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-exec zsh
-
-pyenv install 3.10.8
-pyenv local 3.10.8    # run inside the repo folder
-python -V             # should show 3.10.8
-```
-
-2. **Install Poetry**
-
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-exec zsh
-```
-
-3. **Project deps**
-
-```bash
-poetry install
-```
-
-### Linux (bash)
-
-1. **Install build deps** (example: Ubuntu/Debian)
-
-```bash
-sudo apt update
-sudo apt install -y build-essential libssl-dev zlib1g-dev libbz2-dev \
-  libreadline-dev libsqlite3-dev curl git libncursesw5-dev xz-utils \
-  tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-```
-
-2. **Install Python 3.10.8 via pyenv**
-
-```bash
-curl https://pyenv.run | bash
-# Add to shell:
-echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> ~/.bashrc
-echo 'eval "$(pyenv init -)"' >> ~/.bashrc
-exec bash
-
-pyenv install 3.10.8
-pyenv local 3.10.8     # inside the repo
-python -V
-```
-
-3. **Install Poetry**
-
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-exec bash
-
-poetry install
-```
-
-### Windows (PowerShell)
-
-1. **Python 3.10.8**
-
-   * Option A: install official Python 3.10.8 (ensure “Add to PATH”).
-   * Option B (recommended for version pinning): install **pyenv-win**
-     [https://github.com/pyenv-win/pyenv-win](https://github.com/pyenv-win/pyenv-win)
-
-   With pyenv-win:
-
-   ```powershell
-   # In PowerShell as Admin (follow pyenv-win docs for installation):
-   pyenv install 3.10.8
-   pyenv local 3.10.8   # run inside the repo
-   python --version
-   ```
-
-2. **Poetry**
-
-```powershell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py - 
-# If PATH not updated automatically:
-$env:Path += ";$env:UserProfile\.local\bin"
-poetry --version
-poetry install
-```
-
-> If you hit issues with packaging mode in Poetry 2.x, either keep the provided `pyproject.toml` with `packages = [{ include = "app" }]`, or run `poetry install --no-root`.
-
----
-
-## Quick Start
-
-```bash
-# In the repo root:
-poetry install
-
-# Run the app
-poetry run fx-rates
-# or
-poetry run python app/main.py
-```
-
-This will:
-
-* create `.data/fx_rates.sqlite3` if missing,
-* apply SQL migration from `sql/001_init.sql`,
-* fetch the latest observations for **group 130** in a single HTTP call,
-* upsert rows into `observations`.
 
 ---
 
@@ -210,12 +83,6 @@ FROM observations
 WHERE series_id = 'SEKUSDPMI'
 ORDER BY obs_date DESC
 LIMIT 20;
-```
-
-* Count rows:
-
-```sql
-SELECT COUNT(*) AS rows_total FROM observations;
 ```
 
 ---
@@ -310,40 +177,6 @@ poetry run black .
 
 ---
 
-## Troubleshooting
-
-* **`ModuleNotFoundError: No module named 'requests'`**
-  Run `poetry install`. If `requests` is in `pyproject.toml` but not installed, also try:
-
-  ```bash
-  poetry install --no-root
-  poetry run pip show requests
-  ```
-
-* **“The current project could not be installed … No file/folder found for package …” (Poetry 2.x)**
-  You can either:
-
-  1. Keep packaging mode (as in this repo) where `pyproject.toml` has
-     `packages = [{ include = "app" }]`, or
-  2. Run `poetry install --no-root`, or
-  3. Set `package-mode = false` in `[tool.poetry]` if you prefer dependency-only mode.
-
-* **Poetry not found in PATH**
-  Ensure `~/.local/bin` (Linux/macOS) or `%UserProfile%\.local\bin` (Windows) is in PATH.
-
-* **Corporate proxy / SSL issues**
-  Export standard proxy vars before running:
-
-  ```bash
-  export HTTP_PROXY=http://proxy:port
-  export HTTPS_PROXY=http://proxy:port
-  poetry run fx-rates
-  ```
-
-* **Rate limits**
-  We use a **single** API request for group 130, well within the documented 4 req/min limit.
-
----
 
 ## Notes
 
